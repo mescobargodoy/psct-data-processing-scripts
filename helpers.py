@@ -1,11 +1,16 @@
-import logging
-from pathlib import Path
-
+from astropy.time import Time
+from ctapipe.containers import (
+    EventType,
+    Map,
+    TelescopeTriggerContainer,
+)
 from ctapipe.image.cleaning import dilate
 from traitlets.config import Config
 import warnings
 
 __all__ = ["create_cleaning_config", "n_dilate"]
+
+NAN_TIME = Time(0, format="mjd", scale="tai")
 
 # TODO: logging functions
 
@@ -82,3 +87,22 @@ def n_dilate(geom, mask, n_rings=1):
             mask = dilate(geom, mask)
         return mask
 
+def create_tel_trigger_container():
+    """
+    Trigger information is not written to each event
+    For now each event is assigned dummy trigger information
+    Trigger information required to use TableLoader.read_telescope_events()
+
+    Returns
+    -------
+    ctapipe.containers.Map
+ 
+    """
+    trigger_map = Map(TelescopeTriggerContainer)
+    tel_trigger_container = TelescopeTriggerContainer(
+        time=NAN_TIME, 
+        n_trigger_pixels=3,
+        event_type=EventType.SUBARRAY
+    )
+    trigger_map[1] = tel_trigger_container
+    return trigger_map
