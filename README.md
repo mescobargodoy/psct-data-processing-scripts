@@ -22,6 +22,7 @@ python ApplyDVR.py \
 --boundary-threshold 1.5 \
 --min-picture-neighbors 2 \
 --n-rings 1 \
+--no-dvr-every-n-events 2 \
 --transform-waveform True
 ```
 

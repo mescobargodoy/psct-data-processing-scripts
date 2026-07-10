@@ -54,12 +54,7 @@ def main():
                 or set it to None. By default None.
         """,
         default=None,
-    )
-    parser.add_argument(
-        '--write-r1', 
-        type=bool, 
-        default=True, 
-        help='Whether to write r1 waveforms, default=False'
+        type=int,
     )
     parser.add_argument(
         '--write-images', 
@@ -134,6 +129,13 @@ def main():
         default=1,
         help="Number of rings to dilate the image mask (default: 1)"
     )
+    parser.add_argument(
+        "--no-dvr-every-n-events",
+        type=int,
+        default=0,
+        help="""Number of of events after which to skip DVR application. 
+                0 means no skipping (default: 0)"""
+    )
     args = parser.parse_args()
 
     source = EventSource(args.input, max_events=args.max_events)
@@ -165,7 +167,7 @@ def main():
     with DataWriter(
         source,
         output_path=args.output,
-        write_r1_waveforms=args.write_r1,
+        write_r1_waveforms=True,
         write_dl1_parameters=args.write_hillas,
         write_dl1_images=args.write_images,
         write_muon_parameters=args.write_muon_parameters,
@@ -196,7 +198,9 @@ def main():
             # the 1536 pixels read by target library
             mask_with_rings = mask_with_rings[:1536]
             # Only one gain channel for SCT, hence waveform[0]
-            event.r1.tel[0].waveform[0][~mask_with_rings, :] = 0
+            # Line below applies DVR
+            if event.count % (args.no_dvr_every_n_events+1) != args.no_dvr_every_n_events:
+                event.r1.tel[0].waveform[0][~mask_with_rings, :] = 0
             writer(event)    
 
     prov.finish_activity("Process")
